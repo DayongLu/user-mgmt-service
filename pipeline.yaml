@@ -11,7 +11,7 @@ items:
   spec:
     source:
       git:
-        ref: pipeline
+        ref: master
         uri: https://github.com/DayongLu/user-mgmt-service.git
       type: Git
     strategy:
@@ -19,6 +19,6 @@ items:
       jenkinsPipelineStrategy:
         jenkinsfilePath: Jenkinsfile
     triggers:
-    - generic:
-        secret: FiArdDBH
-      type: Generic
+#    - generic:
+#        secret: FiArdDBH
+#      type: Generic
