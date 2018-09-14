@@ -27,7 +27,7 @@ objects:
         name: user-mgmt-service:latest
     source:
       git:
-        ref: ${GIT_REF}
+        ref: "master"
         uri: ${GIT_URI}
       type: Git
     strategy:
