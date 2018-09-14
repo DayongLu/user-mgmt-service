@@ -74,7 +74,7 @@ objects:
             value: "http://demo-cs-as-config-server.middleware.svc.cluster.local:8888"
           - name: SPRING_PROFILES_ACTIVE
             value: ${SPRING_PROFILES_ACTIVE}
-          image: cart
+          image: user-mgmt-service
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 5
