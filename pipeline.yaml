@@ -15,15 +15,13 @@ items:
         kind: ImageStreamTag
         name: user-mgmt-service:latest
     source:
-      git:
-        ref: "master"
-        uri: ${GIT_URI}
-      type: Git
+      type: None
+#        asFile: "user-mgmt-service.jar"
     strategy:
       sourceStrategy:
         env:
         - name: SPRING_APPLICATION_NAME
-          value: ${SPRING_APPLICATION_NAME}
+          value: "user-mgmt-service"
         - name: SPRING_CLOUD_CONFIG_URI
           value: "http://demo-cs-as-config-server.middleware.svc.cluster.local:8888"
         - name: SPRING_PROFILES_ACTIVE
@@ -31,8 +29,8 @@ items:
         from:
           kind: ImageStreamTag
           name: redhat-openjdk18-openshift:1.1
-          namespace: ${IMAGE_STREAM_NAMESPACE}
-      type: Source
+          namespace: openshift
+      type: Binary
     triggers:
     - type: ConfigChange
 - apiVersion: v1

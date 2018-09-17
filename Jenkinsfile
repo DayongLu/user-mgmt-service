@@ -7,7 +7,7 @@ node('maven') {
 
   stage('Build Image') {
     unstash name:"jar"
-    sh "oc start-build user-mgmt-service --from-file=target/user-mgmt-service-0.0.1-SNAPSHOT.jar --follow"
+    sh "oc start-build user-mgmt-service --from-file=target/user-mgmt-service-0.0.1-SNAPSHOT.jar --binary=true"
   }
   stage('Deploy') {
     openshiftDeploy depCfg: 'user-mgmt-service'
