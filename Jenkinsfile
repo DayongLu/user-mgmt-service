@@ -2,7 +2,7 @@ node('maven') {
 
 
   stage('Build Source To Image') {
-    sh "oc start-build user-mgmt-service"
+    sh "oc start-build user-mgmt-service --follow "
   }
   stage('Deploy') {
     openshiftDeploy depCfg: 'user-mgmt-service'
