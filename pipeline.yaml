@@ -2,37 +2,47 @@ apiVersion: v1
 kind: List
 metadata: {}
 items:
-
-- apiVersion: v1
+- apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata:
-    name: user-mgmt-service
     labels:
-      application: user-mgmt-service
+      app: user-mgmt-service
+    name: user-mgmt-service
+    namespace: dlu
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: user-mgmt-service:latest
+        name: 'user-mgmt-service:latest'
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
     source:
-      type: None
-#        asFile: "user-mgmt-service.jar"
+      git:
+        uri: 'https://github.com/DayongLu/user-mgmt-service.git'
+      type: Git
     strategy:
       sourceStrategy:
-        env:
-        - name: SPRING_APPLICATION_NAME
-          value: "user-mgmt-service"
-        - name: SPRING_CLOUD_CONFIG_URI
-          value: "http://demo-cs-as-config-server.middleware.svc.cluster.local:8888"
-        - name: SPRING_PROFILES_ACTIVE
-          value: "build"
         from:
           kind: ImageStreamTag
-          name: redhat-openjdk18-openshift:1.1
-          namespace: openshift
-      type: Binary
+          name: 'springboot-maven3-centos:latest'
+      type: Source
+    successfulBuildsHistoryLimit: 5
     triggers:
+    - github:
+        secret: '-bQnWBPfSehj73jpuwSC'
+      type: GitHub
+    - generic:
+        secret: mlt48zIoqCdRUUKqyvK-
+      type: Generic
     - type: ConfigChange
+    - imageChange:
+        lastTriggeredImageID: >-
+          codecentric/springboot-maven3-centos@sha256:91ecee201c42cfde8616dfe7b5c77c4f6100f95f50c6e8ffe16a78c99dde59bf
+      type: ImageChange
+  status:
+    lastVersion: 1
+
 - apiVersion: v1
   kind: BuildConfig
   metadata:
