@@ -26,7 +26,7 @@ parameters:
   value: "http://demo-cs-as-config-server.middleware.svc.cluster.local:8888"
   name: CONFIG_SERVER_URI
   required: false
-- displayName: Spring Profile
+- displayName: Spring Running Profile
   value: stage
   name: SPRING_ACTIVE_PROFILE
   required: false
@@ -34,10 +34,10 @@ objects:
 - apiVersion: v1
   kind: BuildConfig
   metadata:
-  labels:
-    app: ${APPLICATION_NAME}
-  name: ${APPLICATION_NAME}
-  namespace: ${PROJECT_NAME}
+    labels:
+      app: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+    namespace: ${PROJECT_NAME}
   spec:
     output:
       to:
@@ -64,7 +64,37 @@ objects:
     - generic:
         secret: mlt48zIoqCdRUUKqyvK-
       type: Generic
-    - type: ConfigChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app: ${APPLICATION_NAME}
+    name: springboot-maven3-centos
+    namespace: ${PROJECT_NAME}
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - annotations:
+        openshift.io/imported-from: codecentric/springboot-maven3-centos
+      from:
+        kind: DockerImage
+        name: codecentric/springboot-maven3-centos
+      generation: 2
+      importPolicy: {}
+      name: latest
+      referencePolicy:
+        type: Source
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+    namespace: ${PROJECT_NAME}
+  spec:
+    lookupPolicy:
+      local: false
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -84,22 +114,33 @@ objects:
           deploymentconfig: ${APPLICATION_NAME}
       spec:
         containers:
-        - env:
-          - name: SPRING_PROFILES_ACTIVE
-            value: ${SPRING_ACTIVE_PROFILE}
-          - name: SPRING_APPLICATION_NAME
-            value: ${APPLICATION_NAME}
-          - name: SPRING_CLOUD_CONFIG_URI
-            value: ${CONFIG_SERVER_URI}
-        - image: "${APPLICATION_NAME}:latest"
-          imagePullPolicy: Always
-          name: ${PROJECT_NAME}
-          ports:
-          - containerPort: 8080
-            protocol: TCP
-          resources: {}
+          - env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: ${SPRING_ACTIVE_PROFILE}
+            - name: SPRING_APPLICATION_NAME
+              value: ${APPLICATION_NAME}
+            - name: SPRING_CLOUD_CONFIG_URI
+              value: ${CONFIG_SERVER_URI}
+            name: ${APPLICATION_NAME}
+            image: "docker-registry.default.svc:5000/${PROJECT_NAME}/${APPLICATION_NAME}:latest"
+            ports:
+              - containerPort: 8080
+                protocol: TCP
+
+            imagePullPolicy: Always
+            terminationMessagePath: /dev/termination-log
+            resources: {}
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APPLICATION_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APPLICATION_NAME}:latest
+      type: ImageChange
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -107,12 +148,24 @@ objects:
       pipeline.alpha.openshift.io/uses: '[{"name": "${APPLICATION_NAME}", "namespace": "${PROJECT_NAME}", "kind": "DeploymentConfig"}]'
     name: "${APPLICATION_NAME}-pipeline"
   spec:
-    source:
-      git:
-        ref: master
-        uri: ${GIT_URI}
-      type: Git
+#    source:
+#      git:
+#        ref: master
+#        uri: ${GIT_URI}
+#      type: Git
     strategy:
       type: JenkinsPipeline
       jenkinsPipelineStrategy:
-        jenkinsfilePath: Jenkinsfile
+        jenkinsfile: |-
+          node('maven') {
+
+
+            stage('Build Source To Image') {
+              sh "oc start-build ${APPLICATION_NAME} --follow"
+            }
+            stage('Deploy') {
+              openshiftDeploy depCfg: '${APPLICATION_NAME}'
+              openshiftVerifyDeployment depCfg: '${APPLICATION_NAME}', replicaCount: 1, verifyReplicaCount: true
+            }
+
+          }
